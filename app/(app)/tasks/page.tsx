@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ListChecks, SlidersHorizontal, X } from 'lucide-react';
+import Link from 'next/link';
+import { ListChecks, SlidersHorizontal, X, CalendarDays } from 'lucide-react';
 import {
   DateRangeSheet,
   type AppliedRange,
@@ -80,7 +81,17 @@ export default function TasksPage() {
     <Screen
       header={
         <>
-          <AppHeader />
+          <AppHeader
+            right={
+              <Link
+                href="/tasks/calendar"
+                aria-label="Calendar view"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-high text-ink-secondary"
+              >
+                <CalendarDays className="h-4 w-4" />
+              </Link>
+            }
+          />
           <TabBar />
         </>
       }

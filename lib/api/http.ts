@@ -29,7 +29,8 @@ export async function authUserId(): Promise<
 
 export function handleError(err: unknown): NextResponse {
   if (err instanceof ZodError) {
-    return fail('Invalid request', 422, { issues: err.flatten() });
+    const first = err.errors[0]?.message;
+    return fail(first ?? 'Invalid request', 422, { issues: err.flatten() });
   }
   if (err instanceof Error && err.message === 'API_KEY_REQUIRED') {
     return fail('A Gemini API key is required for AI features.', 400, {

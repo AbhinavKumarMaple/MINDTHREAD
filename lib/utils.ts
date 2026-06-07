@@ -57,7 +57,13 @@ export function formatDayLabel(iso: string): string {
 }
 
 export function dayKey(iso: string): string {
-  return new Date(iso).toISOString().slice(0, 10);
+  // Local date components (NOT toISOString, which is UTC and shifts the day
+  // for times near midnight in timezones offset from UTC).
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 // Group items by their day, preserving order (newest first if input is sorted desc).
