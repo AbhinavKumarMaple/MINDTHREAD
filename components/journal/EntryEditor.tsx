@@ -31,7 +31,7 @@ export function EntryEditor({ entry }: { entry: Entry }) {
     }
     try {
       if (text !== entry.rawDump) await update.mutateAsync({ rawDump: text });
-      await process.mutateAsync();
+      await process.mutateAsync({ rawDump: text });
     } catch (err) {
       if (err instanceof ApiError && err.code === 'API_KEY_REQUIRED') {
         setNeedsKey(true);

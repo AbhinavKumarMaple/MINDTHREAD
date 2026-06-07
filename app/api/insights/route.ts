@@ -1,6 +1,8 @@
+import { type NextRequest } from 'next/server';
 import { authUserId, ok, handleError } from '@/lib/api/http';
 import { repositories } from '@/lib/repositories';
-import { refreshInsightsForUser } from '@/lib/ai/service';
+import { insightsSaveSchema } from '@/lib/validation/schemas';
+import { saveInsights } from '@/lib/ai/service';
 
 export async function GET() {
   try {
@@ -13,11 +15,13 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+// The browser computes insights (Gemini) and POSTs them here to save.
+export async function POST(req: NextRequest) {
   try {
     const auth = await authUserId();
     if ('response' in auth) return auth.response;
-    const insights = await refreshInsightsForUser(auth.userId);
+    const body = insightsSaveSchema.parse(await req.json());
+    const insights = await saveInsights(auth.userId, body.insights);
     return ok({ insights });
   } catch (err) {
     return handleError(err);

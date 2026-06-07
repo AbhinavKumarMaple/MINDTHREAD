@@ -51,7 +51,7 @@ export default function ChatPage() {
     setInput('');
     setError(null);
     try {
-      await send.mutateAsync({ message: msg, sessionId });
+      await send.mutateAsync({ message: msg, sessionId, history: messages });
     } catch (err) {
       setError(
         err instanceof ApiError && err.code === 'API_KEY_REQUIRED'

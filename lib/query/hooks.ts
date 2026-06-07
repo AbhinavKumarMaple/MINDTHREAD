@@ -5,7 +5,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import { api } from '../api/client';
+import { api, ApiError } from '../api/client';
 import { qk } from './keys';
 import type {
   PublicUser,
@@ -20,19 +20,31 @@ import type {
   Priority,
   TaskStatus,
 } from '../types';
-import type {
-  HabitStats,
-  EmotionDetail,
-  ThemeDetail,
-} from '../analytics';
+import type { HabitStats, EmotionDetail, ThemeDetail } from '../analytics';
 import type { TaskCounts } from '../repositories/interfaces';
+import {
+  processEntry as aiProcessEntry,
+  chatReply as aiChatReply,
+  generateInsights as aiGenerateInsights,
+  ApiKeyRequiredError,
+} from '../ai/gemini';
+import {
+  getLocalProfile,
+  getLocalEntries,
+  setLocalKey,
+  setLocalProfileFields,
+} from '../local/profile';
+import { syncAll, clearLocal } from '../local/sync';
+
+const keyRequired = () =>
+  new ApiError('A Gemini API key is required.', 400, 'API_KEY_REQUIRED');
+const aiFailed = () =>
+  new ApiError('The AI request failed. Please try again.', 502, 'AI_FAILED');
 
 function queryString(params?: Record<string, string | undefined>): string {
   if (!params) return '';
   const sp = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v) sp.set(k, v);
-  }
+  for (const [k, v] of Object.entries(params)) if (v) sp.set(k, v);
   const s = sp.toString();
   return s ? `?${s}` : '';
 }
@@ -51,7 +63,10 @@ export function useLogin() {
   return useMutation({
     mutationFn: (input: { email: string; password: string }) =>
       api.post<{ user: PublicUser }>('/api/auth/login', input),
-    onSuccess: () => qc.invalidateQueries(),
+    onSuccess: async () => {
+      await clearLocal().catch(() => {});
+      qc.clear();
+    },
   });
 }
 
@@ -63,7 +78,10 @@ export function useSignup() {
       password: string;
       displayName?: string;
     }) => api.post<{ user: PublicUser }>('/api/auth/signup', input),
-    onSuccess: () => qc.invalidateQueries(),
+    onSuccess: async () => {
+      await clearLocal().catch(() => {});
+      qc.clear();
+    },
   });
 }
 
@@ -71,7 +89,10 @@ export function useLogout() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => api.post('/api/auth/logout'),
-    onSuccess: () => qc.clear(),
+    onSuccess: async () => {
+      await clearLocal().catch(() => {});
+      qc.clear();
+    },
   });
 }
 
@@ -86,11 +107,27 @@ export function useSettings() {
 export function useUpdateSettings() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: {
+    mutationFn: async (input: {
       tone?: Tone;
       displayName?: string;
       geminiApiKey?: string;
-    }) => api.patch<{ user: PublicUser }>('/api/settings', input),
+    }) => {
+      const res = await api.patch<{ user: PublicUser }>(
+        '/api/settings',
+        input,
+      );
+      // Keep the local cache in sync so AI uses the new key/tone immediately.
+      if (input.geminiApiKey !== undefined) {
+        await setLocalKey(input.geminiApiKey.trim() || null).catch(() => {});
+      }
+      if (input.tone || input.displayName) {
+        await setLocalProfileFields({
+          ...(input.tone ? { tone: input.tone } : {}),
+          ...(input.displayName ? { displayName: input.displayName } : {}),
+        }).catch(() => {});
+      }
+      return res;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.settings });
       qc.invalidateQueries({ queryKey: qk.me });
@@ -142,10 +179,8 @@ export function useCreateEntry() {
 export function useUpdateEntry(id: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: {
-      rawDump?: string;
-      concernStatus?: ConcernStatus;
-    }) => api.patch<{ entry: Entry }>(`/api/entries/${id}`, input),
+    mutationFn: (input: { rawDump?: string; concernStatus?: ConcernStatus }) =>
+      api.patch<{ entry: Entry }>(`/api/entries/${id}`, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.entry(id) });
       qc.invalidateQueries({ queryKey: ['entries'] });
@@ -154,10 +189,28 @@ export function useUpdateEntry(id: string) {
   });
 }
 
+// Runs the Gemini call in the BROWSER using the locally-cached key, then saves
+// the structured result to the cloud DB.
 export function useProcessEntry(id: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => api.post<{ entry: Entry }>(`/api/entries/${id}/process`),
+    mutationFn: async ({ rawDump }: { rawDump: string }) => {
+      const profile = await getLocalProfile();
+      const key = profile?.geminiApiKey ?? null;
+      if (!key) throw keyRequired();
+      let result;
+      try {
+        result = await aiProcessEntry(key, profile!.tone, rawDump);
+      } catch (err) {
+        throw err instanceof ApiKeyRequiredError ? keyRequired() : aiFailed();
+      }
+      const res = await api.post<{ entry: Entry }>(
+        `/api/entries/${id}/process`,
+        result,
+      );
+      await syncAll().catch(() => {});
+      return res;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.entry(id) });
       qc.invalidateQueries({ queryKey: ['entries'] });
@@ -237,14 +290,44 @@ export function useChat(sessionId?: string) {
   });
 }
 
+// Computes the reply in the BROWSER (grounded in locally-cached entries), then
+// saves both messages. Always produces a coherent reply, even on failure.
 export function useSendChat() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { message: string; sessionId?: string }) =>
-      api.post<{ sessionId: string; message: ChatMessage }>(
+    mutationFn: async ({
+      message,
+      sessionId,
+      history,
+    }: {
+      message: string;
+      sessionId?: string;
+      history: ChatMessage[];
+    }) => {
+      const profile = await getLocalProfile();
+      const key = profile?.geminiApiKey ?? null;
+      const entries = await getLocalEntries();
+      let reply: string;
+      try {
+        if (!key) throw new ApiKeyRequiredError();
+        reply = await aiChatReply(
+          key,
+          profile!.tone,
+          entries,
+          history,
+          message,
+        );
+      } catch (err) {
+        reply =
+          err instanceof ApiKeyRequiredError
+            ? 'I need a Gemini API key to respond. Add one in Settings to start chatting with me.'
+            : "I couldn't respond just now — please try again in a moment.";
+      }
+      return api.post<{ sessionId: string; message: ChatMessage }>(
         '/api/chat',
-        input,
-      ),
+        { sessionId, userMessage: message, assistantMessage: reply },
+      );
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['chat'] }),
   });
 }
@@ -312,10 +395,39 @@ export function useInsights() {
   });
 }
 
+// Generates insights in the BROWSER, then saves them.
 export function useRefreshInsights() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => api.post<{ insights: Insight[] }>('/api/insights'),
+    mutationFn: async () => {
+      const profile = await getLocalProfile();
+      const key = profile?.geminiApiKey ?? null;
+      if (!key) throw keyRequired();
+      const entries = (await getLocalEntries()).filter(
+        (e) => e.status === 'processed',
+      );
+      if (entries.length === 0) {
+        return api.post<{ insights: Insight[] }>('/api/insights', {
+          insights: [],
+        });
+      }
+      let items;
+      try {
+        items = await aiGenerateInsights(key, profile!.tone, entries);
+      } catch (err) {
+        throw err instanceof ApiKeyRequiredError ? keyRequired() : aiFailed();
+      }
+      return api.post<{ insights: Insight[] }>('/api/insights', {
+        insights: items.map((i) => ({
+          text: i.text,
+          category: i.category,
+          basedOn: entries.length,
+        })),
+      });
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.insights }),
   });
 }
+
+// ---------- Local-first sync ----------
+export { syncAll, clearLocal };

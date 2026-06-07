@@ -7,6 +7,8 @@ Reverse-engineered from the Pencil design `untitled.pen`. Read in order:
 3. **[03-data-model.md](03-data-model.md)** — entities, relationships, and the catalog of AI (Gemini) operations.
 4. **[04-architecture-recommendation.md](04-architecture-recommendation.md)** — **the backend question, answered**: do we need a backend? (Short answer: not for the MVP — go local-first, add a BaaS later.)
 5. **[05-security-and-auth.md](05-security-and-auth.md)** — **access control + the local→hosted migration path**: how to lock the data so "not anyone can open it," and how to swap a local DB for a hosted one (Supabase) without a rewrite.
+6. **[06-implementation-architecture.md](06-implementation-architecture.md)** — the final stack: Next.js full-stack, custom auth, Prisma/SQLite behind a repository seam (→ Supabase later).
+7. **[07-local-first-sync.md](07-local-first-sync.md)** — **browser-local cache (IndexedDB) + client-side AI**: the cloud DB syncs into IndexedDB; AI runs in the browser (browser → Gemini directly) using the locally-cached key, resolved local-first with fetch-if-missing.
 
 ## One-line summary
 **MINDTHREAD** is an AI journaling app (mobile, dark theme): write a raw "brain dump" → **PROCESS** with Gemini → get a structured entry (title, mood, emotions, themes, tasks, concern flags) → browse derived **AI Analysis** (mood trends, insights, habits, concerns) and **chat** with an AI about your own journal.
