@@ -2,8 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
-import { StatusBar } from '@/components/layout/StatusBar';
-import { HomeIndicator } from '@/components/layout/HomeIndicator';
 import { ScreenHeader } from '@/components/layout/ScreenHeader';
 import { LoadingState } from '@/components/ui/states';
 import { useChat, useSendChat } from '@/lib/query/hooks';
@@ -62,8 +60,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="relative flex h-full flex-col bg-bg-base">
-      <StatusBar />
+    <div className="relative flex h-full flex-col bg-bg-base pt-3">
       <ScreenHeader title="MindThread AI" />
       <div
         ref={scrollRef}
