@@ -13,6 +13,7 @@ export interface PublicUser {
   email: string;
   displayName: string;
   tone: Tone;
+  model: string | null;
   onboarded: boolean;
   hasApiKey: boolean;
 }

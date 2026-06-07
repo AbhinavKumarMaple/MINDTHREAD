@@ -18,6 +18,7 @@ export interface UserRecord {
   passwordHash: string;
   displayName: string;
   tone: Tone;
+  model: string | null;
   geminiApiKeyEnc: string | null;
   onboardedAt: Date | null;
   createdAt: Date;
@@ -34,6 +35,7 @@ export interface CreateUserInput {
 export interface UpdateUserInput {
   displayName?: string;
   tone?: Tone;
+  model?: string | null;
   onboardedAt?: Date | null;
   geminiApiKeyEnc?: string | null;
 }

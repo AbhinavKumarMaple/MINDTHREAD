@@ -1,6 +1,5 @@
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { z } from 'zod';
-import { PROCESS_MODEL, CHAT_MODEL } from '../constants';
 import type { Tone, Entry, ProcessedResult, ChatMessage } from '../types';
 import {
   processSystem,
@@ -85,12 +84,13 @@ function normalize(list: string[]): string[] {
 
 export async function processEntry(
   apiKey: string | null,
+  modelId: string,
   tone: Tone,
   rawDump: string,
 ): Promise<ProcessedResult> {
   const genAI = client(apiKey);
   const model = genAI.getGenerativeModel({
-    model: PROCESS_MODEL,
+    model: modelId,
     systemInstruction: processSystem(tone),
     generationConfig: {
       responseMimeType: 'application/json',
@@ -118,6 +118,7 @@ export async function processEntry(
 
 export async function chatReply(
   apiKey: string | null,
+  modelId: string,
   tone: Tone,
   entries: Entry[],
   history: ChatMessage[],
@@ -125,7 +126,7 @@ export async function chatReply(
 ): Promise<string> {
   const genAI = client(apiKey);
   const model = genAI.getGenerativeModel({
-    model: CHAT_MODEL,
+    model: modelId,
     systemInstruction: chatSystem(tone, entries),
     generationConfig: { temperature: 0.8 },
   });
@@ -172,12 +173,13 @@ const insightsSchema = z.object({
 
 export async function generateInsights(
   apiKey: string | null,
+  modelId: string,
   tone: Tone,
   entries: Entry[],
 ): Promise<{ text: string; category?: string }[]> {
   const genAI = client(apiKey);
   const model = genAI.getGenerativeModel({
-    model: PROCESS_MODEL,
+    model: modelId,
     systemInstruction: insightsSystem(tone),
     generationConfig: {
       responseMimeType: 'application/json',

@@ -44,6 +44,7 @@ export const settingsSchema = z.object({
   tone: toneSchema.optional(),
   displayName: z.string().min(1).max(60).optional(),
   geminiApiKey: z.string().max(200).optional(),
+  model: z.string().max(100).optional(),
 });
 
 export const onboardingSchema = z.object({

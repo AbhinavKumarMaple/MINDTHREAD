@@ -26,6 +26,7 @@ export async function PATCH(req: NextRequest) {
     const update: UpdateUserInput = {};
     if (body.tone) update.tone = body.tone;
     if (body.displayName) update.displayName = body.displayName;
+    if (body.model !== undefined) update.model = body.model.trim() || null;
     if (body.geminiApiKey !== undefined) {
       const trimmed = body.geminiApiKey.trim();
       update.geminiApiKeyEnc = trimmed ? encryptSecret(trimmed) : null;

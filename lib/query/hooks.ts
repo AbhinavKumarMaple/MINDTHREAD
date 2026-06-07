@@ -35,6 +35,7 @@ import {
   setLocalProfileFields,
 } from '../local/profile';
 import { syncAll, clearLocal } from '../local/sync';
+import { resolveModel } from '../constants';
 
 const keyRequired = () =>
   new ApiError('A Gemini API key is required.', 400, 'API_KEY_REQUIRED');
@@ -111,20 +112,26 @@ export function useUpdateSettings() {
       tone?: Tone;
       displayName?: string;
       geminiApiKey?: string;
+      model?: string;
     }) => {
       const res = await api.patch<{ user: PublicUser }>(
         '/api/settings',
         input,
       );
-      // Keep the local cache in sync so AI uses the new key/tone immediately.
+      // Keep the local cache in sync so AI uses the new values immediately.
       if (input.geminiApiKey !== undefined) {
         await setLocalKey(input.geminiApiKey.trim() || null).catch(() => {});
       }
-      if (input.tone || input.displayName) {
-        await setLocalProfileFields({
-          ...(input.tone ? { tone: input.tone } : {}),
-          ...(input.displayName ? { displayName: input.displayName } : {}),
-        }).catch(() => {});
+      const fields: Partial<{
+        tone: Tone;
+        displayName: string;
+        model: string | null;
+      }> = {};
+      if (input.tone) fields.tone = input.tone;
+      if (input.displayName) fields.displayName = input.displayName;
+      if (input.model !== undefined) fields.model = input.model.trim() || null;
+      if (Object.keys(fields).length > 0) {
+        await setLocalProfileFields(fields).catch(() => {});
       }
       return res;
     },
@@ -200,7 +207,12 @@ export function useProcessEntry(id: string) {
       if (!key) throw keyRequired();
       let result;
       try {
-        result = await aiProcessEntry(key, profile!.tone, rawDump);
+        result = await aiProcessEntry(
+          key,
+          resolveModel(profile!.model),
+          profile!.tone,
+          rawDump,
+        );
       } catch (err) {
         throw err instanceof ApiKeyRequiredError ? keyRequired() : aiFailed();
       }
@@ -312,6 +324,7 @@ export function useSendChat() {
         if (!key) throw new ApiKeyRequiredError();
         reply = await aiChatReply(
           key,
+          resolveModel(profile!.model),
           profile!.tone,
           entries,
           history,
@@ -413,7 +426,12 @@ export function useRefreshInsights() {
       }
       let items;
       try {
-        items = await aiGenerateInsights(key, profile!.tone, entries);
+        items = await aiGenerateInsights(
+          key,
+          resolveModel(profile!.model),
+          profile!.tone,
+          entries,
+        );
       } catch (err) {
         throw err instanceof ApiKeyRequiredError ? keyRequired() : aiFailed();
       }

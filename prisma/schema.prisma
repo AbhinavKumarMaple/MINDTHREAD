@@ -23,6 +23,7 @@ model User {
   passwordHash    String
   displayName     String    @default("Journal")
   tone            String    @default("warm") // blunt | warm | analytical | close_friend
+  model           String? // Gemini model id for AI calls; null = app default
   geminiApiKeyEnc String? // AES-256-GCM ciphertext of the user's Gemini key
   onboardedAt     DateTime?
   createdAt       DateTime  @default(now())

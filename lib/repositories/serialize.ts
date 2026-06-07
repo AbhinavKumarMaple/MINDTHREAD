@@ -103,6 +103,7 @@ export function toPublicUser(u: PUser): PublicUser {
     email: u.email,
     displayName: u.displayName,
     tone: u.tone as Tone,
+    model: u.model,
     onboarded: !!u.onboardedAt,
     hasApiKey: !!u.geminiApiKeyEnc,
   };

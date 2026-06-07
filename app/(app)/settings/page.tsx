@@ -15,6 +15,7 @@ import {
   useLogout,
 } from '@/lib/query/hooks';
 import { TONES, APP_NAME } from '@/lib/constants';
+import { ModelSelect } from '@/components/settings/ModelSelect';
 import type { Tone } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -28,10 +29,14 @@ export default function SettingsPage() {
   const [name, setName] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
+  const [model, setModel] = useState('');
   const [savedField, setSavedField] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) setName(user.displayName);
+    if (user) {
+      setName(user.displayName);
+      setModel(user.model ?? '');
+    }
   }, [user]);
 
   function flash(field: string) {
@@ -51,6 +56,10 @@ export default function SettingsPage() {
     await update.mutateAsync({ geminiApiKey: apiKey });
     setApiKey('');
     flash('key');
+  }
+  async function saveModel() {
+    await update.mutateAsync({ model: model.trim() });
+    flash('model');
   }
   async function signOut() {
     await logout.mutateAsync();
@@ -165,6 +174,24 @@ export default function SettingsPage() {
               </p>
             )}
           </Card>
+        </section>
+
+        <section>
+          <SectionLabel>AI Model</SectionLabel>
+          <p className="mb-3 text-[13px] leading-relaxed text-ink-secondary">
+            Which model handles your AI processing, insights and chat. Pick one
+            of your available models or type any model name.
+          </p>
+          <ModelSelect value={model} onChange={setModel} />
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={saveModel}
+            loading={update.isPending}
+            className="mt-3"
+          >
+            {savedField === 'model' ? 'Saved' : 'Save model'}
+          </Button>
         </section>
 
         <section>

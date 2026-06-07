@@ -21,7 +21,12 @@ async function main() {
   await prisma.chatSession.deleteMany({ where: { userId: user.id } });
   await prisma.user.update({
     where: { id: user.id },
-    data: { geminiApiKeyEnc: null, tone: 'warm', displayName: 'Journal' },
+    data: {
+      geminiApiKeyEnc: null,
+      tone: 'warm',
+      displayName: 'Journal',
+      model: null,
+    },
   });
   console.log(
     `Demo reset: removed ${deleted.count} test account(s); key cleared, tone=warm, name=Journal, chat cleared.`,

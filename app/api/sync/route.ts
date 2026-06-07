@@ -27,6 +27,7 @@ export async function GET() {
         email: user.email,
         displayName: user.displayName,
         tone: user.tone,
+        model: user.model,
         onboarded: !!user.onboardedAt,
         geminiApiKey,
       },

@@ -10,6 +10,7 @@ export interface LocalProfile {
   email: string;
   displayName: string;
   tone: Tone;
+  model: string | null;
   onboarded: boolean;
   geminiApiKey: string | null;
 }

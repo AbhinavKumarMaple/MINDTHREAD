@@ -40,7 +40,7 @@ export async function setLocalKey(key: string | null): Promise<void> {
 }
 
 export async function setLocalProfileFields(
-  fields: Partial<Pick<LocalProfile, 'tone' | 'displayName'>>,
+  fields: Partial<Pick<LocalProfile, 'tone' | 'displayName' | 'model'>>,
 ): Promise<void> {
   const profile = await localDb().profile.get('me');
   if (profile) {

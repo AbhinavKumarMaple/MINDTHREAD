@@ -66,5 +66,18 @@ export function emotionColor(name: string): string {
   return EMOTION_COLORS[name.toLowerCase()] ?? '#8B5CF6';
 }
 
-export const PROCESS_MODEL = 'gemini-1.5-flash';
-export const CHAT_MODEL = 'gemini-1.5-flash';
+// Gemini model used for AI calls when the user hasn't picked one.
+// gemini-2.5-flash-lite = Google's most cost-efficient model (GA since 2025-07-22).
+export const DEFAULT_MODEL = 'gemini-2.5-flash-lite';
+export const FALLBACK_MODEL = 'gemini-2.5-flash';
+
+// Shown in the model picker before/without a live listModels fetch.
+export const COMMON_MODELS = [
+  'gemini-2.5-flash-lite',
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+];
+
+export function resolveModel(model: string | null | undefined): string {
+  return model?.trim() || DEFAULT_MODEL;
+}
