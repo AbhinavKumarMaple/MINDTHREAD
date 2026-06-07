@@ -1,0 +1,31 @@
+'use client';
+
+import { useState, type ReactNode } from 'react';
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
+import { ApiError } from '../api/client';
+
+export function QueryProvider({ children }: { children: ReactNode }) {
+  const [client] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 30_000,
+            retry: (failureCount, error) => {
+              // Never retry auth errors; retry transient errors once.
+              if (error instanceof ApiError && error.status < 500) return false;
+              return failureCount < 1;
+            },
+            refetchOnWindowFocus: false,
+          },
+        },
+      }),
+  );
+
+  return (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+}

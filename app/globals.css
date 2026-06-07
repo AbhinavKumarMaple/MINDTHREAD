@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg-deep font-sans text-ink-primary antialiased;
+  background:
+    radial-gradient(
+      900px 500px at 50% -8%,
+      rgba(124, 92, 191, 0.16),
+      transparent 60%
+    ),
+    radial-gradient(
+      700px 500px at 100% 100%,
+      rgba(244, 158, 18, 0.06),
+      transparent 55%
+    ),
+    #07091a;
+  @apply flex min-h-[100dvh] items-stretch justify-center sm:items-center;
+}
+
+@layer components {
+  .app-shell {
+    @apply relative flex h-[100dvh] w-full max-w-[480px] flex-col overflow-hidden bg-bg-base;
+  }
+  @media (min-width: 520px) {
+    .app-shell {
+      @apply h-[880px] max-h-[94dvh] rounded-[40px] border border-line shadow-2xl;
+    }
+  }
+  .glass {
+    background: rgba(14, 15, 30, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}
