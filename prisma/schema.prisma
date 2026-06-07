@@ -4,12 +4,17 @@
 // is a provider change + a re-implementation of the repository, not a rewrite.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // "native" for local dev; "rhel-openssl-3.0.x" for Vercel's serverless runtime.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Runtime (use Supabase's pooler/IPv4 string on Vercel).
+  url       = env("DATABASE_URL")
+  // Migrations / `prisma db push` (direct connection).
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
