@@ -26,7 +26,8 @@ import { TaskRow } from '@/components/tasks/TaskRow';
 import { TaskSheet } from '@/components/tasks/TaskSheet';
 import { StatusSheet } from '@/components/tasks/StatusSheet';
 import { SortFilterScreen } from '@/components/filters/SortFilterScreen';
-import { LoadingState, EmptyState } from '@/components/ui/states';
+import { EmptyState } from '@/components/ui/states';
+import { TaskListSkeleton } from '@/components/ui/skeletons';
 import { useTasks } from '@/lib/query/hooks';
 import { dayKey, formatDayLabel, taskDate, cn } from '@/lib/utils';
 import type { Task } from '@/lib/types';
@@ -208,7 +209,7 @@ export default function TasksCalendarPage() {
 
         <div className="mt-4">
           {isLoading ? (
-            <LoadingState />
+            <TaskListSkeleton count={2} />
           ) : dayTasks.length === 0 ? (
             <EmptyState
               title="Nothing scheduled"

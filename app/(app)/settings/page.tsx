@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Check } from 'lucide-react';
 import { Screen } from '@/components/layout/Screen';
-import { LoadingState } from '@/components/ui/states';
+import { DetailSkeleton } from '@/components/ui/skeletons';
 import { ModelSelect } from '@/components/settings/ModelSelect';
 import { TONE_ICONS } from '@/components/tone-icons';
 import {
@@ -100,7 +100,7 @@ export default function SettingsPage() {
   if (isLoading || !user) {
     return (
       <Screen>
-        <LoadingState />
+        <DetailSkeleton />
       </Screen>
     );
   }

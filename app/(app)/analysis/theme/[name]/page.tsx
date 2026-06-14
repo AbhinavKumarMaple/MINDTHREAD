@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { Screen } from '@/components/layout/Screen';
-import { LoadingState, EmptyState } from '@/components/ui/states';
+import { EmptyState } from '@/components/ui/states';
+import { DetailSkeleton } from '@/components/ui/skeletons';
 import { useThemeDetail } from '@/lib/query/hooks';
 
 const ACCENT = '#F59E0B';
@@ -92,7 +93,7 @@ export default function ThemeDetailPage() {
     >
       <div className="px-5 pb-10">
         {isLoading ? (
-          <LoadingState />
+          <DetailSkeleton />
         ) : !detail || detail.count === 0 ? (
           <EmptyState
             title="No data for this theme"

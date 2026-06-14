@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ShieldAlert, Check, TrendingDown, TrendingUp } from 'lucide-react';
 import { Screen } from '@/components/layout/Screen';
-import { LoadingState, EmptyState } from '@/components/ui/states';
+import { EmptyState } from '@/components/ui/states';
+import { DetailSkeleton } from '@/components/ui/skeletons';
 import { useConcerns, useUpdateEntry } from '@/lib/query/hooks';
 import { formatMetaDate, cn } from '@/lib/utils';
 import type { Entry } from '@/lib/types';
@@ -136,7 +137,7 @@ export default function ConcernsPage() {
     >
       <div className="px-5 pb-10">
         {isLoading ? (
-          <LoadingState />
+          <DetailSkeleton />
         ) : !data || data.counts.total === 0 ? (
           <EmptyState
             icon={ShieldAlert}

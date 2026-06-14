@@ -4,6 +4,7 @@ import {
   useQuery,
   useMutation,
   useQueryClient,
+  keepPreviousData,
 } from '@tanstack/react-query';
 import { api, ApiError } from '../api/client';
 import { qk } from './keys';
@@ -163,6 +164,8 @@ export function useEntries(params?: Record<string, string | undefined>) {
     queryKey: qk.entries(clean),
     queryFn: () =>
       api.get<{ entries: Entry[] }>(`/api/entries${queryString(params)}`),
+    // Keep the current list on screen while a filter/sort change refetches.
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -257,6 +260,8 @@ export function useTasks(params?: Record<string, string | undefined>) {
       api.get<{ tasks: Task[]; counts: TaskCounts }>(
         `/api/tasks${queryString(params)}`,
       ),
+    // Keep the current list on screen while a filter/sort change refetches.
+    placeholderData: keepPreviousData,
   });
 }
 

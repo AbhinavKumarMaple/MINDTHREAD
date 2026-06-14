@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Send, Sparkles } from 'lucide-react';
-import { LoadingState } from '@/components/ui/states';
+import { ChatSkeleton } from '@/components/ui/skeletons';
 import { useChat, useSendChat } from '@/lib/query/hooks';
 import { ApiError } from '@/lib/api/client';
 import { cn } from '@/lib/utils';
@@ -99,7 +99,7 @@ export default function ChatPage() {
         className="min-h-0 flex-1 space-y-3.5 overflow-y-auto px-4 py-3 no-scrollbar"
       >
         {isLoading && !isNew ? (
-          <LoadingState />
+          <ChatSkeleton />
         ) : (
           <>
             {empty && (

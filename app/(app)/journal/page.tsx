@@ -18,7 +18,8 @@ import { Fab } from '@/components/layout/Fab';
 import { ToneChip } from '@/components/layout/ToneChip';
 import { EntryCard } from '@/components/journal/EntryCard';
 import { Button } from '@/components/ui/Button';
-import { LoadingState, ErrorState, EmptyState } from '@/components/ui/states';
+import { ErrorState, EmptyState } from '@/components/ui/states';
+import { EntryListSkeleton } from '@/components/ui/skeletons';
 import { SortFilterScreen } from '@/components/filters/SortFilterScreen';
 import {
   DateRangeSheet,
@@ -160,7 +161,7 @@ export default function JournalPage() {
 
         <div className="mt-4">
           {entries.isLoading ? (
-            <LoadingState />
+            <EntryListSkeleton />
           ) : entries.isError ? (
             <ErrorState onRetry={() => entries.refetch()} />
           ) : groups.length === 0 ? (

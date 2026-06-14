@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Sparkles, RefreshCw, Bookmark } from 'lucide-react';
 import { Screen } from '@/components/layout/Screen';
 import { Button } from '@/components/ui/Button';
-import { LoadingState, EmptyState } from '@/components/ui/states';
+import { EmptyState } from '@/components/ui/states';
+import { DetailSkeleton } from '@/components/ui/skeletons';
 import { useInsights, useRefreshInsights } from '@/lib/query/hooks';
 import { ApiError } from '@/lib/api/client';
 import { cn } from '@/lib/utils';
@@ -133,7 +134,7 @@ export default function InsightsPage() {
           </div>
         )}
         {isLoading ? (
-          <LoadingState />
+          <DetailSkeleton />
         ) : insights.length === 0 ? (
           <EmptyState
             icon={Sparkles}

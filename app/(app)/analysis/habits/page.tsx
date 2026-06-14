@@ -11,7 +11,8 @@ import {
   format,
 } from 'date-fns';
 import { Screen } from '@/components/layout/Screen';
-import { LoadingState, EmptyState } from '@/components/ui/states';
+import { EmptyState } from '@/components/ui/states';
+import { DetailSkeleton } from '@/components/ui/skeletons';
 import { useHabits } from '@/lib/query/hooks';
 import { dayKey, cn } from '@/lib/utils';
 
@@ -66,7 +67,7 @@ export default function HabitsPage() {
     >
       <div className="px-5 pb-12">
         {isLoading ? (
-          <LoadingState />
+          <DetailSkeleton />
         ) : !habits || habits.totalEntries === 0 ? (
           <EmptyState
             icon={Clock}

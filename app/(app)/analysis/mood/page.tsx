@@ -14,7 +14,8 @@ import {
 } from 'lucide-react';
 import { Screen } from '@/components/layout/Screen';
 import { MoodChart } from '@/components/analysis/charts';
-import { LoadingState, EmptyState } from '@/components/ui/states';
+import { EmptyState } from '@/components/ui/states';
+import { DetailSkeleton } from '@/components/ui/skeletons';
 import { useAnalytics } from '@/lib/query/hooks';
 import { moodAccent } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -134,7 +135,7 @@ export default function MoodTrendPage() {
     >
       <div className="px-5 pb-10 pt-5">
         {isLoading ? (
-          <LoadingState />
+          <DetailSkeleton />
         ) : all.length === 0 ? (
           <EmptyState
             icon={TrendingUp}

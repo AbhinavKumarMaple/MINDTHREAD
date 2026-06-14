@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { Screen } from '@/components/layout/Screen';
-import { LoadingState, EmptyState } from '@/components/ui/states';
+import { EmptyState } from '@/components/ui/states';
+import { DetailSkeleton } from '@/components/ui/skeletons';
 import { useEmotionDetail } from '@/lib/query/hooks';
 import { emotionColor } from '@/lib/constants';
 
@@ -41,7 +42,7 @@ export default function EmotionDetailPage() {
     >
       <div className="px-5 pb-10">
         {isLoading ? (
-          <LoadingState />
+          <DetailSkeleton />
         ) : !detail || detail.count === 0 ? (
           <EmptyState
             title="No data for this emotion"

@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { Screen } from '@/components/layout/Screen';
 import { ScreenHeader } from '@/components/layout/ScreenHeader';
 import { LoadingState, ErrorState } from '@/components/ui/states';
+import { DetailSkeleton } from '@/components/ui/skeletons';
 import { EntryEditor } from '@/components/journal/EntryEditor';
 import { ProcessedEntry } from '@/components/journal/ProcessedEntry';
 import { useEntry } from '@/lib/query/hooks';
@@ -15,7 +16,9 @@ export default function EntryPage() {
   if (isLoading) {
     return (
       <Screen header={<ScreenHeader />}>
-        <LoadingState label="Loading entry…" />
+        <div className="px-5 py-4">
+          <DetailSkeleton />
+        </div>
       </Screen>
     );
   }

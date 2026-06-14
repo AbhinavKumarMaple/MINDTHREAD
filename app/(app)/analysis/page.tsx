@@ -14,7 +14,8 @@ import { AppHeader } from '@/components/layout/AppHeader';
 import { TabBar } from '@/components/layout/TabBar';
 import { ToneChip } from '@/components/layout/ToneChip';
 import { MoodChart } from '@/components/analysis/charts';
-import { LoadingState, ErrorState, EmptyState } from '@/components/ui/states';
+import { ErrorState, EmptyState } from '@/components/ui/states';
+import { AnalysisSkeleton } from '@/components/ui/skeletons';
 import {
   useAnalytics,
   useHabits,
@@ -128,7 +129,7 @@ export default function AnalysisPage() {
     >
       <div className="px-5 py-4 pb-24">
         {isLoading ? (
-          <LoadingState />
+          <AnalysisSkeleton />
         ) : isError ? (
           <ErrorState onRetry={() => refetch()} />
         ) : !summary || summary.processedEntries === 0 ? (

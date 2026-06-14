@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Lightbulb, Bookmark } from 'lucide-react';
 import { Screen } from '@/components/layout/Screen';
-import { LoadingState, EmptyState } from '@/components/ui/states';
+import { EmptyState } from '@/components/ui/states';
+import { DetailSkeleton } from '@/components/ui/skeletons';
 import { useAnalytics, useHabits, useCreateEntry } from '@/lib/query/hooks';
 
 interface Reco {
@@ -151,7 +152,7 @@ export default function RecommendationPage() {
     >
       <div className="px-5 pb-10">
         {loading ? (
-          <LoadingState />
+          <DetailSkeleton />
         ) : !reco ? (
           <EmptyState
             icon={Lightbulb}

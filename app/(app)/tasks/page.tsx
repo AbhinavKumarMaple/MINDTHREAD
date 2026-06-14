@@ -15,7 +15,8 @@ import { Screen } from '@/components/layout/Screen';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { TabBar } from '@/components/layout/TabBar';
 import { Fab } from '@/components/layout/Fab';
-import { LoadingState, ErrorState, EmptyState } from '@/components/ui/states';
+import { ErrorState, EmptyState } from '@/components/ui/states';
+import { TaskListSkeleton } from '@/components/ui/skeletons';
 import { TaskRow } from '@/components/tasks/TaskRow';
 import { TaskSheet } from '@/components/tasks/TaskSheet';
 import { StatusSheet } from '@/components/tasks/StatusSheet';
@@ -236,7 +237,7 @@ export default function TasksPage() {
 
         <div className="mt-5">
           {isLoading ? (
-            <LoadingState />
+            <TaskListSkeleton />
           ) : isError ? (
             <ErrorState onRetry={() => refetch()} />
           ) : groups.length === 0 ? (
