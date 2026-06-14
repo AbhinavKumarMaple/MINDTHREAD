@@ -2,22 +2,53 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Check } from 'lucide-react';
+import { ArrowLeft, Check } from 'lucide-react';
 import { Screen } from '@/components/layout/Screen';
-import { ScreenHeader } from '@/components/layout/ScreenHeader';
-import { Card, SectionLabel } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Field } from '@/components/ui/Field';
 import { LoadingState } from '@/components/ui/states';
+import { ModelSelect } from '@/components/settings/ModelSelect';
+import { TONE_ICONS } from '@/components/tone-icons';
 import {
   useSettings,
   useUpdateSettings,
   useLogout,
 } from '@/lib/query/hooks';
-import { TONES, APP_NAME } from '@/lib/constants';
-import { ModelSelect } from '@/components/settings/ModelSelect';
+import { TONES } from '@/lib/constants';
 import type { Tone } from '@/lib/types';
 import { cn } from '@/lib/utils';
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-4 flex items-center gap-2.5 text-[14px] font-bold uppercase tracking-[0.22em] text-ink-primary">
+      <span className="h-1.5 w-1.5 rounded-full bg-ink-primary" />
+      {children}
+    </p>
+  );
+}
+
+function StripCard({
+  accent,
+  children,
+  className,
+}: {
+  accent: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        'relative overflow-hidden rounded-2xl border border-line bg-surface p-5 pl-6',
+        className,
+      )}
+    >
+      <span
+        className="absolute inset-y-0 left-0 w-[3px]"
+        style={{ backgroundColor: accent }}
+      />
+      {children}
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -68,152 +99,167 @@ export default function SettingsPage() {
 
   if (isLoading || !user) {
     return (
-      <Screen header={<ScreenHeader title="Settings" />}>
+      <Screen>
         <LoadingState />
       </Screen>
     );
   }
 
   return (
-    <Screen header={<ScreenHeader title="Settings" />}>
-      <div className="space-y-6 px-5 pb-10">
+    <Screen
+      header={
+        <div className="flex items-center gap-4 px-5 pb-5 pt-2">
+          <button
+            onClick={() => router.back()}
+            aria-label="Back"
+            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-bg-deep transition active:scale-95"
+          >
+            <ArrowLeft className="h-5 w-5" strokeWidth={2.5} />
+          </button>
+          <h1 className="font-display text-[24px] font-bold uppercase tracking-[0.22em] text-ink-primary">
+            Settings
+          </h1>
+        </div>
+      }
+    >
+      <div className="space-y-9 px-5 pb-12">
         <section>
           <SectionLabel>Tone</SectionLabel>
-          <div className="grid grid-cols-2 gap-2.5">
-            {TONES.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTone(t.id)}
-                disabled={update.isPending}
-                className={cn(
-                  'rounded-2xl border p-3.5 text-left transition active:scale-[0.98]',
-                  user.tone === t.id
-                    ? 'border-primary bg-primary/10'
-                    : 'border-line bg-surface',
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-[14px] font-semibold text-ink-primary">
+          <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 no-scrollbar">
+            {TONES.map((t) => {
+              const Icon = TONE_ICONS[t.id];
+              const active = user.tone === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTone(t.id)}
+                  disabled={update.isPending}
+                  className={cn(
+                    'relative w-[160px] shrink-0 rounded-2xl border p-4 text-left transition active:scale-[0.98] disabled:opacity-60',
+                    active
+                      ? 'border-primary-soft bg-primary/15'
+                      : 'border-line bg-surface',
+                  )}
+                >
+                  {active && (
+                    <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full border border-primary-soft/60 px-2 py-0.5 text-[10px] font-bold text-primary-soft">
+                      <Check className="h-3 w-3" /> Active
+                    </span>
+                  )}
+                  <Icon
+                    className={cn(
+                      'h-6 w-6',
+                      active ? 'text-primary-soft' : 'text-ink-secondary',
+                    )}
+                    strokeWidth={1.5}
+                  />
+                  <p
+                    className={cn(
+                      'mt-4 text-[16px] font-semibold',
+                      active ? 'text-primary-soft' : 'text-ink-primary',
+                    )}
+                  >
                     {t.label}
                   </p>
-                  {user.tone === t.id && (
-                    <Check className="h-4 w-4 text-primary-soft" />
-                  )}
-                </div>
-                <p className="mt-1 text-[11px] leading-snug text-ink-muted">
-                  {t.blurb}
-                </p>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <SectionLabel>Profile</SectionLabel>
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <Field
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-              />
-            </div>
-            <Button
-              variant="secondary"
-              onClick={saveName}
-              loading={update.isPending}
-            >
-              {savedField === 'name' ? 'Saved' : 'Save'}
-            </Button>
+                </button>
+              );
+            })}
           </div>
         </section>
 
         <section>
           <SectionLabel>Gemini API Key</SectionLabel>
-          <Card>
-            <p className="text-[13px] leading-relaxed text-ink-secondary">
-              Your journal is private to your account. A Gemini API key is
-              required for AI processing, insights, and chat. It is encrypted
-              before being stored.
+          <StripCard accent="#2DD4BF">
+            <p className="text-[16px] leading-relaxed text-ink-muted">
+              Your data is stored locally. An API key is required for AI
+              processing features.
             </p>
-            <div className="mt-3 flex items-center gap-2">
-              <div className="relative flex-1">
-                <input
-                  type={showKey ? 'text' : 'password'}
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={
-                    user.hasApiKey ? '•••••••••• (saved)' : 'Paste your key'
-                  }
-                  className="w-full rounded-xl border border-line bg-surface px-4 py-3 pr-10 text-[15px] text-ink-primary outline-none placeholder:text-ink-muted focus:border-primary"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowKey((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted"
-                  aria-label={showKey ? 'Hide' : 'Show'}
-                >
-                  {showKey ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-              <Button
-                onClick={saveKey}
-                loading={update.isPending}
-                disabled={!apiKey.trim()}
+            <input
+              type={showKey ? 'text' : 'password'}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder={user.hasApiKey ? '••••••••••••••••••••••' : 'Paste your key'}
+              className="mt-4 w-full rounded-xl border border-line bg-transparent px-4 py-3.5 text-[15px] tracking-widest text-ink-primary outline-none placeholder:text-ink-muted focus:border-primary"
+            />
+            <div className="mt-3.5 grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowKey((s) => !s)}
+                className="rounded-xl bg-surface-high py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-primary-soft transition active:scale-[0.98]"
               >
-                {savedField === 'key' ? 'Saved' : 'Save'}
-              </Button>
+                {showKey ? 'Hide' : 'Show'}
+              </button>
+              <button
+                onClick={saveKey}
+                disabled={!apiKey.trim() || update.isPending}
+                className="rounded-xl bg-primary-700 py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-white transition active:scale-[0.98] disabled:opacity-50"
+              >
+                {savedField === 'key' ? 'Saved ✓' : 'Save'}
+              </button>
             </div>
             {user.hasApiKey && (
-              <p className="mt-2 flex items-center gap-1 text-xs text-success">
+              <p className="mt-3 flex items-center gap-1 text-xs text-success">
                 <Check className="h-3.5 w-3.5" /> A key is configured
               </p>
             )}
-          </Card>
+          </StripCard>
         </section>
 
         <section>
           <SectionLabel>AI Model</SectionLabel>
-          <p className="mb-3 text-[13px] leading-relaxed text-ink-secondary">
-            Which model handles your AI processing, insights and chat. Pick one
-            of your available models or type any model name.
-          </p>
-          <ModelSelect value={model} onChange={setModel} />
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={saveModel}
-            loading={update.isPending}
-            className="mt-3"
-          >
-            {savedField === 'model' ? 'Saved' : 'Save model'}
-          </Button>
+          <StripCard accent="#8B5CF6">
+            <p className="mb-4 text-[16px] leading-relaxed text-ink-muted">
+              Which model handles your AI processing, insights and chat.
+            </p>
+            <ModelSelect value={model} onChange={setModel} />
+            <button
+              onClick={saveModel}
+              disabled={update.isPending}
+              className="mt-4 w-full rounded-xl bg-surface-high py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-primary-soft transition active:scale-[0.98] disabled:opacity-50"
+            >
+              {savedField === 'model' ? 'Saved ✓' : 'Save model'}
+            </button>
+          </StripCard>
         </section>
 
         <section>
-          <SectionLabel>About {APP_NAME}</SectionLabel>
-          <Card className="bg-surface-raised">
-            <p className="text-[13px] leading-relaxed text-ink-secondary">
-              {APP_NAME} is your second mind — a sanctuary for raw thought,
+          <SectionLabel>Profile</SectionLabel>
+          <StripCard accent="#3B82F6">
+            <div className="flex items-center gap-3">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                className="min-w-0 flex-1 rounded-xl border border-line bg-transparent px-4 py-3.5 text-[15px] text-ink-primary outline-none placeholder:text-ink-muted focus:border-primary"
+              />
+              <button
+                onClick={saveName}
+                disabled={update.isPending}
+                className="shrink-0 rounded-xl bg-surface-high px-5 py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-primary-soft transition active:scale-[0.98] disabled:opacity-50"
+              >
+                {savedField === 'name' ? 'Saved ✓' : 'Save'}
+              </button>
+            </div>
+          </StripCard>
+        </section>
+
+        <section>
+          <SectionLabel>About MindThread</SectionLabel>
+          <StripCard accent="#F59E0B">
+            <p className="text-[16px] leading-relaxed text-ink-muted">
+              MindThread is your second mind. A sanctuary for raw thought,
               refined by artificial intelligence to uncover patterns and
               promote clarity.
             </p>
-          </Card>
+          </StripCard>
         </section>
 
-        <Button
-          variant="ghost"
-          fullWidth
+        <button
           onClick={signOut}
-          loading={logout.isPending}
-          className="text-danger"
+          disabled={logout.isPending}
+          className="w-full py-2 text-center text-[15px] font-semibold text-danger disabled:opacity-50"
         >
           Sign out
-        </Button>
+        </button>
       </div>
     </Screen>
   );

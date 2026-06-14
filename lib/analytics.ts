@@ -114,10 +114,16 @@ export interface HabitStats {
   streakDays: number;
   totalEntries: number;
   totalWords: number;
+  avgWords: number;
   writingHours: number[]; // 24 buckets
   peakHourLabel: string;
   consistency: { day: string; count: number }[];
   lengthTrend: { entryNumber: number; words: number }[];
+  // Heatmap rows = 4 time blocks (morning/afternoon/evening/night), cols = Mon..Sun
+  weekdayBlocks: number[][];
+  // Average words per weekday, Mon..Sun
+  weekdayWords: number[];
+  correlation: { longer: string; shorter: string };
 }
 
 export function computeHabits(entries: Entry[]): HabitStats {
@@ -134,10 +140,53 @@ export function computeHabits(entries: Entry[]): HabitStats {
     const k = dayKey(e.createdAt);
     consistencyMap.set(k, (consistencyMap.get(k) ?? 0) + 1);
   }
+
+  // 4 time blocks x 7 weekdays (Mon-first)
+  const weekdayBlocks = Array.from({ length: 4 }, () => new Array(7).fill(0));
+  const blockOf = (h: number) => (h < 6 ? 3 : h < 12 ? 0 : h < 18 ? 1 : 2);
+  for (const e of entries) {
+    const d = new Date(e.createdAt);
+    const wd = (d.getDay() + 6) % 7;
+    weekdayBlocks[blockOf(d.getHours())][wd] += 1;
+  }
+
+  const weekdaySums = new Array(7).fill(0);
+  const weekdayCounts = new Array(7).fill(0);
+  for (const e of entries) {
+    const wd = (new Date(e.createdAt).getDay() + 6) % 7;
+    weekdaySums[wd] += e.wordCount;
+    weekdayCounts[wd] += 1;
+  }
+  const weekdayWords = weekdaySums.map((s, i) =>
+    weekdayCounts[i] > 0 ? Math.round(s / weekdayCounts[i]) : 0,
+  );
+
+  // Mood vs length: split processed entries at the median word count.
+  const withMood = entries.filter(
+    (e) => e.status === 'processed' && e.moodScore != null,
+  );
+  let longer = '—';
+  let shorter = '—';
+  if (withMood.length >= 4) {
+    const sorted = withMood.slice().sort((a, b) => a.wordCount - b.wordCount);
+    const half = Math.floor(sorted.length / 2);
+    const avgMoodOf = (list: Entry[]) =>
+      list.reduce((a, e) => a + (e.moodScore as number), 0) /
+      Math.max(1, list.length);
+    const lowAvg = avgMoodOf(sorted.slice(0, half));
+    const highAvg = avgMoodOf(sorted.slice(half));
+    const verdict = (diff: number) =>
+      diff > 0.5 ? 'better mood' : diff < -0.5 ? 'lower mood' : 'neutral';
+    longer = verdict(highAvg - lowAvg);
+    shorter = verdict(lowAvg - highAvg);
+  }
+
+  const totalWords = entries.reduce((a, e) => a + e.wordCount, 0);
   return {
     streakDays: computeStreak(entries),
     totalEntries: entries.length,
-    totalWords: entries.reduce((a, e) => a + e.wordCount, 0),
+    totalWords,
+    avgWords: entries.length > 0 ? Math.round(totalWords / entries.length) : 0,
     writingHours,
     peakHourLabel:
       entries.length > 0
@@ -152,6 +201,9 @@ export function computeHabits(entries: Entry[]): HabitStats {
       .sort((a, b) => a.entryNumber - b.entryNumber)
       .slice(-12)
       .map((e) => ({ entryNumber: e.entryNumber, words: e.wordCount })),
+    weekdayBlocks,
+    weekdayWords,
+    correlation: { longer, shorter },
   };
 }
 
@@ -161,7 +213,12 @@ export interface EmotionDetail {
   thisPeriodPct: number;
   prevPeriodPct: number;
   triggers: { theme: string; count: number }[];
-  relatedEntries: { id: string; title: string | null; createdAt: string }[];
+  relatedEntries: {
+    id: string;
+    title: string | null;
+    createdAt: string;
+    excerpt: string;
+  }[];
 }
 
 export function computeEmotionDetail(
@@ -190,7 +247,12 @@ export function computeEmotionDetail(
     relatedEntries: withEmotion
       .slice()
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
-      .map((e) => ({ id: e.id, title: e.title, createdAt: e.createdAt })),
+      .map((e) => ({
+        id: e.id,
+        title: e.title,
+        createdAt: e.createdAt,
+        excerpt: (e.summary ?? e.rawDump).slice(0, 90),
+      })),
   };
 }
 

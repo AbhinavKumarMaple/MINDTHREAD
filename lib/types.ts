@@ -3,7 +3,7 @@
 
 export type Tone = 'blunt' | 'warm' | 'analytical' | 'close_friend';
 export type EntryStatus = 'draft' | 'processing' | 'processed' | 'error';
-export type TaskStatus = 'pending' | 'done';
+export type TaskStatus = 'pending' | 'done' | 'cancelled';
 export type Priority = 'low' | 'normal' | 'high';
 export type TaskSource = 'entry' | 'manual';
 export type ConcernStatus = 'unresolved' | 'improving' | 'resolved';
@@ -16,6 +16,15 @@ export interface PublicUser {
   model: string | null;
   onboarded: boolean;
   hasApiKey: boolean;
+}
+
+export interface EntryPattern {
+  name: string;
+  whatIsIt: string;
+  evidence: string[];
+  advice: string;
+  needsAttention: boolean;
+  tried: boolean;
 }
 
 export interface Entry {
@@ -31,6 +40,9 @@ export interface Entry {
   moodScore: number | null;
   emotions: string[];
   themes: string[];
+  feeling: string | null;
+  ideas: string[];
+  pattern: EntryPattern | null;
   isConcern: boolean;
   concernStatus: ConcernStatus | null;
   wordCount: number;
@@ -43,6 +55,7 @@ export interface Entry {
 export interface Task {
   id: string;
   title: string;
+  notes: string | null;
   status: TaskStatus;
   priority: Priority;
   source: TaskSource;
@@ -122,4 +135,13 @@ export interface ProcessedResult {
   isConcern: boolean;
   tasks: { title: string; priority: Priority }[];
   aiAnalysis: string;
+  feeling: string;
+  ideas: string[];
+  pattern: {
+    name: string;
+    whatIsIt: string;
+    evidence: string[];
+    advice: string;
+    needsAttention: boolean;
+  } | null;
 }

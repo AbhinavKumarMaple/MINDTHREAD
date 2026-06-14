@@ -39,6 +39,18 @@ export function toEntry(e: PEntry): Entry {
     moodScore: e.moodScore,
     emotions: parseJsonArray(e.emotions),
     themes: parseJsonArray(e.themes),
+    feeling: e.feeling,
+    ideas: parseJsonArray(e.ideas),
+    pattern: e.patternName
+      ? {
+          name: e.patternName,
+          whatIsIt: e.patternWhat ?? '',
+          evidence: parseJsonArray(e.patternEvidence),
+          advice: e.patternAdvice ?? '',
+          needsAttention: e.patternAttention,
+          tried: e.patternTried,
+        }
+      : null,
     isConcern: e.isConcern,
     concernStatus: (e.concernStatus as ConcernStatus) ?? null,
     wordCount: e.wordCount,
@@ -55,12 +67,14 @@ export function toTask(
   return {
     id: t.id,
     title: t.title,
+    notes: t.notes,
     status: t.status as TaskStatus,
     priority: t.priority as Priority,
     source: t.source as TaskSource,
     sourceEntryId: t.sourceEntryId,
     sourceEntryNumber: t.entry?.entryNumber ?? null,
-    isConcern: t.isConcern,
+    // Effective concern: AI-flagged, or high priority and revised more than twice.
+    isConcern: t.isConcern || (t.priority === 'high' && t.editCount > 2),
     dueDate: iso(t.dueDate),
     completedAt: iso(t.completedAt),
     createdAt: t.createdAt.toISOString(),

@@ -13,7 +13,7 @@ const tabs = [
 export function TabBar() {
   const pathname = usePathname();
   return (
-    <div className="flex items-center gap-7 border-b border-line px-5">
+    <div className="flex border-b border-line/60">
       {tabs.map((t) => {
         const active =
           t.href === '/journal'
@@ -24,13 +24,15 @@ export function TabBar() {
             key={t.href}
             href={t.href}
             className={cn(
-              'relative -mb-px py-3 text-[15px] font-medium transition',
-              active ? 'text-ink-primary' : 'text-ink-muted',
+              'relative flex-1 pb-3.5 pt-1 text-center text-[17px] transition',
+              active
+                ? 'font-semibold text-ink-primary'
+                : 'text-ink-muted',
             )}
           >
             {t.label}
             {active && (
-              <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary" />
+              <span className="absolute inset-x-6 bottom-0 h-[3px] rounded-full bg-white" />
             )}
           </Link>
         );

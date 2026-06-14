@@ -186,8 +186,11 @@ export function useCreateEntry() {
 export function useUpdateEntry(id: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { rawDump?: string; concernStatus?: ConcernStatus }) =>
-      api.patch<{ entry: Entry }>(`/api/entries/${id}`, input),
+    mutationFn: (input: {
+      rawDump?: string;
+      concernStatus?: ConcernStatus;
+      patternTried?: boolean;
+    }) => api.patch<{ entry: Entry }>(`/api/entries/${id}`, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.entry(id) });
       qc.invalidateQueries({ queryKey: ['entries'] });
@@ -260,8 +263,12 @@ export function useTasks(params?: Record<string, string | undefined>) {
 export function useCreateTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { title: string; priority?: Priority }) =>
-      api.post<{ task: Task }>('/api/tasks', input),
+    mutationFn: (input: {
+      title: string;
+      priority?: Priority;
+      dueDate?: string;
+      notes?: string;
+    }) => api.post<{ task: Task }>('/api/tasks', input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
   });
 }
@@ -277,6 +284,8 @@ export function useUpdateTask() {
       title?: string;
       status?: TaskStatus;
       priority?: Priority;
+      dueDate?: string | null;
+      notes?: string | null;
     }) => api.patch<{ task: Task }>(`/api/tasks/${id}`, input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
   });

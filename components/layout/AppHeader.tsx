@@ -2,27 +2,30 @@
 
 import { Menu } from 'lucide-react';
 import { useDrawer } from './drawer-context';
-import { IconButton } from '../ui/IconButton';
-import { APP_NAME } from '@/lib/constants';
+import { APP_NAME, APP_TAGLINE } from '@/lib/constants';
 
 export function AppHeader({ right }: { right?: React.ReactNode }) {
   const { setOpen } = useDrawer();
   return (
-    <header className="flex items-center justify-between px-4 pb-2 pt-1">
-      <IconButton onClick={() => setOpen(true)} aria-label="Open menu">
-        <Menu className="h-5 w-5" />
-      </IconButton>
-      <div className="flex flex-col items-center">
-        <span className="font-display text-[17px] font-bold tracking-[0.22em] text-ink-primary">
-          {APP_NAME}
-        </span>
-        <span className="text-[8px] uppercase tracking-[0.25em] text-ink-muted">
-          your second mind
-        </span>
+    <header className="flex items-center justify-between px-5 pb-4 pt-2">
+      <div className="flex items-center gap-3.5">
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="Open menu"
+          className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-bg-deep transition active:scale-95"
+        >
+          <Menu className="h-5 w-5" strokeWidth={3} />
+        </button>
+        <div>
+          <p className="font-display text-[19px] font-bold leading-tight tracking-[0.18em] text-ink-primary">
+            {APP_NAME}
+          </p>
+          <p className="text-[11px] tracking-[0.18em] text-primary-soft">
+            {APP_TAGLINE}
+          </p>
+        </div>
       </div>
-      <div className="flex min-w-[40px] items-center justify-end">
-        {right}
-      </div>
+      {right}
     </header>
   );
 }

@@ -26,7 +26,7 @@ export function Fab({
       className={cn(
         'flex h-14 w-14 items-center justify-center rounded-full shadow-fab transition active:scale-95',
         variant === 'light'
-          ? 'border border-primary/40 bg-white text-primary-600'
+          ? 'border border-primary/40 bg-white text-bg-deep'
           : 'bg-primary text-white',
         className,
       )}

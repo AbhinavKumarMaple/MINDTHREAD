@@ -22,7 +22,10 @@ export function processSystem(tone: Tone): string {
     '- themes: 1-4 short lowercase themes (e.g. work-stress, self-doubt, growth).',
     '- reflectiveQuestion: one gentle question that invites deeper reflection.',
     '- isConcern: true only if the entry shows meaningful distress worth gently tracking.',
-    '- aiAnalysis: 2-4 sentences naming a pattern you notice, in your assigned voice.',
+    '- aiAnalysis: 2-4 sentences naming what you notice, in your assigned voice.',
+    '- feeling: 1-2 sentences reflecting how the writer seems to be feeling.',
+    '- ideas: 0-4 short ideas or thoughts from the entry worth keeping.',
+    '- pattern: if a recurring mental pattern is visible, name it (e.g. "Avoidant Rumination") with whatIsIt (1-2 sentences), evidence (2-3 short bullets quoting/paraphrasing the entry), advice (1-2 sentences), and needsAttention (true if it deserves gentle attention). Use null if no clear pattern.',
     '- tasks: concrete action items the writer implied (0-5). Each has a title and priority (low|normal|high).',
     'Return ONLY the JSON object matching the provided schema.',
   ].join('\n');

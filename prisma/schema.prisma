@@ -49,6 +49,14 @@ model Entry {
   moodScore     Float?
   emotions      String? // JSON string array, e.g. ["anxious","reflective"]
   themes        String? // JSON string array
+  feeling       String? // AI: how the writer seems to be feeling
+  ideas         String? // JSON string array of ideas worth keeping
+  patternName     String? // AI-detected pattern, e.g. "Avoidant Rumination"
+  patternWhat     String?
+  patternEvidence String? // JSON string array of bullets
+  patternAdvice   String?
+  patternAttention Boolean @default(false)
+  patternTried     Boolean @default(false)
   isConcern     Boolean   @default(false)
   concernStatus String? // unresolved | improving | resolved
   wordCount     Int       @default(0)
@@ -69,11 +77,13 @@ model Task {
   id            String    @id @default(cuid())
   userId        String
   title         String
-  status        String    @default("pending") // pending | done
+  notes         String? // free-form details / bullet points (plain text)
+  status        String    @default("pending") // pending | done | cancelled
   priority      String    @default("normal") // low | normal | high
   source        String    @default("manual") // entry | manual
   sourceEntryId String?
   isConcern     Boolean   @default(false)
+  editCount     Int       @default(0) // # of times the task's content was revised
   dueDate       DateTime?
   completedAt   DateTime?
   createdAt     DateTime  @default(now())

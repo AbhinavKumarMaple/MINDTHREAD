@@ -128,6 +128,15 @@ const entries: EntryRepository = {
     if (apply('moodScore')) data.moodScore = input.moodScore;
     if (apply('emotions')) data.emotions = JSON.stringify(input.emotions);
     if (apply('themes')) data.themes = JSON.stringify(input.themes);
+    if (apply('feeling')) data.feeling = input.feeling;
+    if (apply('ideas')) data.ideas = JSON.stringify(input.ideas);
+    if (apply('patternName')) data.patternName = input.patternName;
+    if (apply('patternWhat')) data.patternWhat = input.patternWhat;
+    if (apply('patternEvidence'))
+      data.patternEvidence = JSON.stringify(input.patternEvidence);
+    if (apply('patternAdvice')) data.patternAdvice = input.patternAdvice;
+    if (apply('patternAttention')) data.patternAttention = input.patternAttention;
+    if (apply('patternTried')) data.patternTried = input.patternTried;
     if (apply('isConcern')) data.isConcern = input.isConcern;
     if (apply('concernStatus')) data.concernStatus = input.concernStatus;
     if (apply('wordCount')) data.wordCount = input.wordCount;
@@ -142,20 +151,35 @@ const entries: EntryRepository = {
   count: (userId) => prisma.entry.count({ where: { userId } }),
 };
 
+// A task counts as a "concern" when the AI flagged it, OR when it is high
+// priority and its content has been revised more than twice. Kept in one place
+// so the list filter, the counts, and serialize all agree.
+const CONCERN_OR: Prisma.TaskWhereInput[] = [
+  { isConcern: true },
+  { priority: 'high', editCount: { gt: 2 } },
+];
+
 function taskWhere(
   userId: string,
   filters: TaskListFilters,
 ): Prisma.TaskWhereInput {
   const where: Prisma.TaskWhereInput = { userId };
+  // Each OR-group is ANDed together so e.g. a date range + concern filter compose.
+  const and: Prisma.TaskWhereInput[] = [];
   if (filters.status === 'pending') where.status = 'pending';
   else if (filters.status === 'done') where.status = 'done';
-  else if (filters.status === 'concern') where.isConcern = true;
+  else if (filters.status === 'concern') and.push({ OR: CONCERN_OR });
   if (filters.source) where.source = filters.source;
   if (filters.from || filters.to) {
-    where.createdAt = {};
-    if (filters.from) where.createdAt.gte = filters.from;
-    if (filters.to) where.createdAt.lte = filters.to;
+    // Filter by the task's effective date: its due date if set, otherwise the
+    // date it was created. A task whose due date moves to another month must
+    // leave the old month's range and join the new one.
+    const range: Prisma.DateTimeFilter = {};
+    if (filters.from) range.gte = filters.from;
+    if (filters.to) range.lte = filters.to;
+    and.push({ OR: [{ dueDate: range }, { dueDate: null, createdAt: range }] });
   }
+  if (and.length) where.AND = and;
   return where;
 }
 
@@ -166,7 +190,9 @@ const tasks: TaskRepository = {
         ? { createdAt: 'asc' }
         : filters.sort === 'priority'
           ? { priority: 'desc' }
-          : { createdAt: 'desc' };
+          : filters.sort === 'status'
+            ? { status: 'desc' } // 'pending' sorts before 'done'
+            : { createdAt: 'desc' };
     const rows = await prisma.task.findMany({
       where: taskWhere(userId, filters),
       orderBy,
@@ -186,6 +212,7 @@ const tasks: TaskRepository = {
       data: {
         userId,
         title: input.title,
+        notes: input.notes ?? null,
         priority: input.priority ?? 'normal',
         source: input.source ?? 'manual',
         sourceEntryId: input.sourceEntryId ?? null,
@@ -219,12 +246,26 @@ const tasks: TaskRepository = {
     if (!existing) return null;
     const data: Prisma.TaskUpdateInput = {};
     if (input.title !== undefined) data.title = input.title;
+    if (input.notes !== undefined) data.notes = input.notes;
     if (input.priority !== undefined) data.priority = input.priority;
     if (input.dueDate !== undefined) data.dueDate = input.dueDate;
     if (input.status !== undefined) {
       data.status = input.status;
       data.completedAt = input.status === 'done' ? new Date() : null;
     }
+    // Count this as a revision only when actual content changed (not a pure
+    // status toggle, and not a no-op "save"). Feeds the high-priority concern rule.
+    const dueChanged =
+      input.dueDate !== undefined &&
+      (input.dueDate ? input.dueDate.getTime() : null) !==
+        (existing.dueDate ? existing.dueDate.getTime() : null);
+    const contentChanged =
+      (input.title !== undefined && input.title !== existing.title) ||
+      (input.notes !== undefined &&
+        (input.notes ?? null) !== (existing.notes ?? null)) ||
+      (input.priority !== undefined && input.priority !== existing.priority) ||
+      dueChanged;
+    if (contentChanged) data.editCount = { increment: 1 };
     const row = await prisma.task.update({
       where: { id },
       data,
@@ -240,7 +281,7 @@ const tasks: TaskRepository = {
       prisma.task.count({ where: { userId } }),
       prisma.task.count({ where: { userId, status: 'done' } }),
       prisma.task.count({ where: { userId, status: 'pending' } }),
-      prisma.task.count({ where: { userId, isConcern: true } }),
+      prisma.task.count({ where: { userId, OR: CONCERN_OR } }),
     ]);
     return { all, done, pending, concern };
   },

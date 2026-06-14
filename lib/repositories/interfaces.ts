@@ -71,6 +71,14 @@ export interface UpdateEntryInput {
   moodScore?: number | null;
   emotions?: string[];
   themes?: string[];
+  feeling?: string | null;
+  ideas?: string[];
+  patternName?: string | null;
+  patternWhat?: string | null;
+  patternEvidence?: string[];
+  patternAdvice?: string | null;
+  patternAttention?: boolean;
+  patternTried?: boolean;
   isConcern?: boolean;
   concernStatus?: ConcernStatus | null;
   wordCount?: number;
@@ -96,7 +104,7 @@ export interface EntryRepository {
 }
 
 export type TaskStatusFilter = 'all' | 'pending' | 'done' | 'concern';
-export type TaskSort = 'newest' | 'oldest' | 'priority';
+export type TaskSort = 'newest' | 'oldest' | 'priority' | 'status';
 
 export interface TaskListFilters {
   status?: TaskStatusFilter;
@@ -108,6 +116,7 @@ export interface TaskListFilters {
 
 export interface CreateTaskInput {
   title: string;
+  notes?: string | null;
   priority?: Priority;
   source?: 'entry' | 'manual';
   sourceEntryId?: string | null;
@@ -117,6 +126,7 @@ export interface CreateTaskInput {
 
 export interface UpdateTaskInput {
   title?: string;
+  notes?: string | null;
   status?: TaskStatus;
   priority?: Priority;
   dueDate?: Date | null;

@@ -9,6 +9,19 @@ export class ApiError extends Error {
   }
 }
 
+// A 401 from an authenticated endpoint means the session is gone or stale
+// (e.g. the user it pointed at was deleted). The server has already cleared the
+// cookie; bounce to /login so the user re-authenticates instead of getting
+// stuck on a half-broken page. Auth endpoints handle their own 401s (a wrong
+// password is a 401 too), and we never redirect away from the auth pages.
+function handleUnauthorized(path: string): void {
+  if (typeof window === 'undefined') return;
+  if (path.startsWith('/api/auth/')) return;
+  const here = window.location.pathname;
+  if (here === '/login' || here === '/signup') return;
+  window.location.replace('/login');
+}
+
 export async function apiFetch<T>(
   path: string,
   init?: RequestInit,
@@ -25,6 +38,7 @@ export async function apiFetch<T>(
     ?.includes('application/json');
   const data = isJson ? await res.json() : null;
   if (!res.ok) {
+    if (res.status === 401) handleUnauthorized(path);
     throw new ApiError(
       data?.error ?? 'Request failed',
       res.status,

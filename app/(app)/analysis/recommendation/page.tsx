@@ -2,11 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lightbulb, Check } from 'lucide-react';
+import { ArrowLeft, Lightbulb, Bookmark } from 'lucide-react';
 import { Screen } from '@/components/layout/Screen';
-import { ScreenHeader } from '@/components/layout/ScreenHeader';
-import { Card, SectionLabel } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { LoadingState, EmptyState } from '@/components/ui/states';
 import { useAnalytics, useHabits, useCreateEntry } from '@/lib/query/hooks';
 
@@ -14,7 +11,8 @@ interface Reco {
   title: string;
   rationale: string;
   basedOn: number;
-  why: string[];
+  why: { title: string; sub: string; accent: string }[];
+  promptLabel: string;
   prompt: string;
 }
 
@@ -23,13 +21,30 @@ function buildReco(
   topEmotion: string | null,
   total: number,
 ): Reco {
-  if (peakHour != null && (peakHour >= 22 || peakHour <= 3)) {
+  if (peakHour != null && (peakHour >= 21 || peakHour <= 4)) {
     return {
       title: 'Try journaling in the morning',
       rationale:
-        'Your entries cluster late at night, when thoughts tend to spiral. A short morning entry can set a calmer tone for the day.',
+        'Your evening entries show higher anxiety patterns. Morning journaling can help set a calmer tone for the day.',
       basedOn: total,
-      why: ['Reduces late-night rumination', 'Sets a daily intention', 'Better emotional clarity'],
+      why: [
+        {
+          title: 'Reduces anxiety',
+          sub: 'Lower cortisol levels recorded in morning entries.',
+          accent: '#34D399',
+        },
+        {
+          title: 'Sets daily intention',
+          sub: 'Prime your brain to notice positive opportunities.',
+          accent: '#3B82F6',
+        },
+        {
+          title: 'Better emotional clarity',
+          sub: 'Process sleep-thoughts while they are still fresh.',
+          accent: '#EC4899',
+        },
+      ],
+      promptLabel: 'Morning Journal Prompt',
       prompt:
         "What's one thing you're looking forward to today, and what might hold you back?",
     };
@@ -40,9 +55,26 @@ function buildReco(
   ) {
     return {
       title: 'Name the worry, then one small step',
-      rationale: `“${topEmotion}” shows up often in your entries. Naming a specific worry and one tiny next step makes it feel more manageable.`,
+      rationale: `"${topEmotion}" shows up often in your entries. Naming a specific worry and one tiny next step makes it feel more manageable.`,
       basedOn: total,
-      why: ['Externalizes the worry', 'Restores a sense of control', 'Turns feeling into action'],
+      why: [
+        {
+          title: 'Externalizes the worry',
+          sub: 'Writing it down moves it out of the loop in your head.',
+          accent: '#34D399',
+        },
+        {
+          title: 'Restores control',
+          sub: 'One small step turns dread into a to-do.',
+          accent: '#3B82F6',
+        },
+        {
+          title: 'Builds momentum',
+          sub: 'Tiny wins compound across the week.',
+          accent: '#EC4899',
+        },
+      ],
+      promptLabel: 'Worry Journal Prompt',
       prompt:
         "What's weighing on you right now, and what's the smallest step you could take toward it?",
     };
@@ -52,7 +84,24 @@ function buildReco(
     rationale:
       'Consistency is where journaling pays off. A short, honest check-in today keeps the thread going.',
     basedOn: total,
-    why: ['Builds a durable habit', 'Surfaces clearer patterns over time', 'Takes under two minutes'],
+    why: [
+      {
+        title: 'Builds a durable habit',
+        sub: 'Daily check-ins lower the activation energy to write.',
+        accent: '#34D399',
+      },
+      {
+        title: 'Clearer patterns',
+        sub: 'More entries give the AI better signal over time.',
+        accent: '#3B82F6',
+      },
+      {
+        title: 'Takes two minutes',
+        sub: 'A few honest lines are enough.',
+        accent: '#EC4899',
+      },
+    ],
+    promptLabel: 'Daily Journal Prompt',
     prompt: 'How are you, really, in this exact moment?',
   };
 }
@@ -83,8 +132,24 @@ export default function RecommendationPage() {
   }
 
   return (
-    <Screen header={<ScreenHeader title="For You" accent />}>
-      <div className="space-y-5 px-5 pb-10">
+    <Screen
+      header={
+        <div className="flex items-center px-5 pb-5 pt-2">
+          <button
+            onClick={() => router.back()}
+            aria-label="Back"
+            className="text-ink-primary"
+          >
+            <ArrowLeft className="h-6 w-6" />
+          </button>
+          <h1 className="flex-1 text-center text-[16px] font-bold uppercase tracking-[0.25em] text-ink-primary">
+            For You
+          </h1>
+          <Bookmark className="h-5 w-5 text-ink-muted" />
+        </div>
+      }
+    >
+      <div className="px-5 pb-10">
         {loading ? (
           <LoadingState />
         ) : !reco ? (
@@ -95,61 +160,72 @@ export default function RecommendationPage() {
           />
         ) : (
           <>
-            <Card className="border-primary/20 bg-primary/5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-soft">
-                A recommendation
+            <div className="relative overflow-hidden rounded-2xl border border-line bg-surface p-5 pl-6">
+              <span className="absolute inset-y-0 left-0 w-[3px] bg-primary-soft" />
+              <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-primary-soft">
+                <Lightbulb className="h-3.5 w-3.5" /> AI Recommendation
               </p>
-              <h1 className="mt-2 font-display text-[22px] font-bold leading-tight">
+              <h2 className="mt-2 font-display text-[22px] font-bold leading-tight text-ink-primary">
                 {reco.title}
-              </h1>
-              <p className="mt-2 text-[15px] leading-relaxed text-ink-secondary">
+              </h2>
+              <p className="mt-2.5 text-[15px] leading-relaxed text-ink-secondary">
                 {reco.rationale}
               </p>
-              <p className="mt-3 text-xs text-ink-muted">
-                Based on {reco.basedOn} entries analyzed
+              <p className="mt-3 text-[13px] text-ink-muted">
+                — Based on {reco.basedOn} entries analysed
               </p>
-            </Card>
-
-            <div>
-              <SectionLabel>Why this works</SectionLabel>
-              <div className="space-y-2">
-                {reco.why.map((w) => (
-                  <div
-                    key={w}
-                    className="flex items-center gap-2.5 rounded-xl bg-surface px-3.5 py-3 text-sm text-ink-secondary"
-                  >
-                    <Check className="h-4 w-4 text-success" />
-                    {w}
-                  </div>
-                ))}
-              </div>
             </div>
 
-            <Card className="bg-surface-raised">
-              <SectionLabel>Try it now</SectionLabel>
-              <p className="text-[15px] italic leading-relaxed text-ink-primary">
+            <p className="mb-3 mt-8 text-[12px] font-bold uppercase tracking-[0.2em] text-ink-secondary">
+              Why this works
+            </p>
+            <div className="space-y-3.5">
+              {reco.why.map((w) => (
+                <div
+                  key={w.title}
+                  className="relative overflow-hidden rounded-2xl border border-line bg-surface p-4 pl-6"
+                >
+                  <span
+                    className="absolute inset-y-0 left-0 w-[3px]"
+                    style={{ backgroundColor: w.accent }}
+                  />
+                  <p className="text-[16px] font-bold text-ink-primary">
+                    {w.title}
+                  </p>
+                  <p className="mt-1 text-[14px] leading-relaxed text-ink-muted">
+                    {w.sub}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <p className="mb-3 mt-8 text-[12px] font-bold uppercase tracking-[0.2em] text-ink-secondary">
+              Try it now
+            </p>
+            <div className="rounded-2xl bg-primary p-5">
+              <p className="text-[12px] font-semibold text-white/80">
+                {reco.promptLabel}
+              </p>
+              <p className="mt-2 font-display text-[20px] font-bold italic leading-snug text-white">
                 “{reco.prompt}”
               </p>
-            </Card>
+            </div>
 
-            <div className="space-y-2.5">
-              <Button
-                fullWidth
-                size="lg"
+            <div className="mt-6 space-y-3">
+              <button
                 onClick={startWriting}
-                loading={create.isPending}
+                disabled={create.isPending}
+                className="w-full rounded-2xl bg-primary-soft py-4 text-center text-[17px] font-bold text-bg-deep transition active:scale-[0.99] disabled:opacity-60"
               >
-                Start writing
-              </Button>
-              <Button
-                fullWidth
-                size="lg"
-                variant="secondary"
+                Start Writing
+              </button>
+              <button
                 onClick={() => setSnoozed(true)}
                 disabled={snoozed}
+                className="w-full rounded-2xl border border-line bg-surface py-4 text-center text-[17px] font-semibold text-ink-secondary transition active:scale-[0.99] disabled:opacity-60"
               >
                 {snoozed ? 'Reminder set for tomorrow' : 'Remind me tomorrow'}
-              </Button>
+              </button>
             </div>
           </>
         )}

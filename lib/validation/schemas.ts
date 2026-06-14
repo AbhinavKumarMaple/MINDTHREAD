@@ -25,10 +25,12 @@ export const createEntrySchema = z.object({
 export const updateEntrySchema = z.object({
   rawDump: z.string().max(20000).optional(),
   concernStatus: z.enum(['unresolved', 'improving', 'resolved']).optional(),
+  patternTried: z.boolean().optional(),
 });
 
 export const createTaskSchema = z.object({
   title: z.string().min(1).max(300),
+  notes: z.string().max(5000).nullish(),
   priority: prioritySchema.optional(),
   dueDate: z.string().datetime().optional(),
   sourceEntryId: z.string().optional(),
@@ -36,8 +38,11 @@ export const createTaskSchema = z.object({
 
 export const updateTaskSchema = z.object({
   title: z.string().min(1).max(300).optional(),
-  status: z.enum(['pending', 'done']).optional(),
+  notes: z.string().max(5000).nullish(),
+  status: z.enum(['pending', 'done', 'cancelled']).optional(),
   priority: prioritySchema.optional(),
+  // ISO datetime to set, or null to clear the due date.
+  dueDate: z.string().datetime().nullish(),
 });
 
 export const settingsSchema = z.object({
@@ -67,6 +72,18 @@ export const processedResultSchema = z.object({
   reflectiveQuestion: z.string().max(1000),
   isConcern: z.boolean(),
   aiAnalysis: z.string().max(4000),
+  feeling: z.string().max(2000).default(''),
+  ideas: z.array(z.string().max(500)).max(10).default([]),
+  pattern: z
+    .object({
+      name: z.string().max(100),
+      whatIsIt: z.string().max(2000),
+      evidence: z.array(z.string().max(500)).max(10),
+      advice: z.string().max(2000),
+      needsAttention: z.boolean(),
+    })
+    .nullable()
+    .default(null),
   tasks: z
     .array(
       z.object({

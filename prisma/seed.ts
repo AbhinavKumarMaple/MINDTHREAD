@@ -17,6 +17,15 @@ interface SeedEntry {
   themes: string[];
   reflectiveQuestion: string;
   aiAnalysis: string;
+  feeling?: string;
+  ideas?: string[];
+  pattern?: {
+    name: string;
+    whatIsIt: string;
+    evidence: string[];
+    advice: string;
+    needsAttention?: boolean;
+  };
   isConcern?: boolean;
   tasks?: { title: string; priority: 'low' | 'normal' | 'high'; done?: boolean }[];
 }
@@ -33,13 +42,31 @@ const ENTRIES: SeedEntry[] = [
     emotions: ['anxious', 'reflective'],
     themes: ['work-stress', 'self-doubt'],
     reflectiveQuestion:
-      'What would it feel like to walk into that meeting already prepared?',
+      'Am I pushing people away without realising it?',
     aiAnalysis:
       'You tend to ruminate late at night, replaying conversations and projecting worst cases onto tomorrow.',
+    feeling:
+      'Restless and self-critical — your mind keeps circling the same conversation looking for what went wrong.',
+    ideas: [
+      'Write the first slide before bed so tomorrow starts in motion',
+      'Ask Arjun directly instead of replaying the conversation',
+    ],
+    pattern: {
+      name: 'Avoidant Rumination',
+      whatIsIt:
+        'Replaying social interactions on a loop while avoiding the follow-up that would actually resolve them.',
+      evidence: [
+        'Replaying social errors frequently',
+        'Avoiding follow-up conversations',
+      ],
+      advice:
+        'When you catch a replay loop, send one small message or write one line of the task you are avoiding.',
+      needsAttention: true,
+    },
     isConcern: true,
     tasks: [
-      { title: 'Prepare slides for the presentation', priority: 'high' },
-      { title: 'Follow up with Arjun about the conversation', priority: 'normal' },
+      { title: 'Complete morning focus block', priority: 'high' },
+      { title: 'Prepare presentation intro', priority: 'normal' },
     ],
   },
   {
@@ -196,6 +223,13 @@ async function main() {
         moodScore: s.mood,
         emotions: JSON.stringify(s.emotions),
         themes: JSON.stringify(s.themes),
+        feeling: s.feeling ?? null,
+        ideas: s.ideas ? JSON.stringify(s.ideas) : null,
+        patternName: s.pattern?.name ?? null,
+        patternWhat: s.pattern?.whatIsIt ?? null,
+        patternEvidence: s.pattern ? JSON.stringify(s.pattern.evidence) : null,
+        patternAdvice: s.pattern?.advice ?? null,
+        patternAttention: s.pattern?.needsAttention ?? false,
         isConcern: s.isConcern ?? false,
         concernStatus: s.isConcern ? 'unresolved' : null,
         wordCount: s.dump.split(/\s+/).length,

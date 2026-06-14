@@ -41,10 +41,9 @@ export async function POST(req: NextRequest) {
     const auth = await authUserId();
     if ('response' in auth) return auth.response;
     const body = createEntrySchema.parse(await req.json());
-    const user = await repositories.users.findById(auth.userId);
     const entry = await repositories.entries.create(auth.userId, {
       rawDump: body.rawDump,
-      toneUsed: user?.tone ?? 'warm',
+      toneUsed: auth.user.tone,
     });
     return ok({ entry }, 201);
   } catch (err) {

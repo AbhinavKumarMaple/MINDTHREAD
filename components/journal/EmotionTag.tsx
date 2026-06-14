@@ -11,8 +11,8 @@ export function EmotionTag({
   const color = emotionColor(name);
   const content = (
     <span
-      className="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium capitalize"
-      style={{ backgroundColor: `${color}22`, color }}
+      className="inline-flex items-center rounded-full border px-3 py-1 text-[13px] font-medium capitalize"
+      style={{ borderColor: color, color }}
     >
       {name}
     </span>

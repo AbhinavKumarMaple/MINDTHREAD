@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
     const body = createTaskSchema.parse(await req.json());
     const task = await repositories.tasks.create(auth.userId, {
       title: body.title,
+      notes: body.notes ?? null,
       priority: body.priority,
       source: body.sourceEntryId ? 'entry' : 'manual',
       sourceEntryId: body.sourceEntryId ?? null,

@@ -1,7 +1,8 @@
 'use client';
 
 import {
-  LineChart,
+  ComposedChart,
+  Area,
   Line,
   ResponsiveContainer,
   YAxis,
@@ -35,29 +36,46 @@ export function StatCard({
   );
 }
 
-export function MoodChart({ data }: { data: MoodPoint[] }) {
+export function MoodChart({
+  data,
+  weekLabels = false,
+}: {
+  data: MoodPoint[];
+  weekLabels?: boolean;
+}) {
   const chartData = data.map((p, i) => ({
     i,
     mood: p.moodScore,
-    date: new Date(p.date).toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-    }),
+    date: weekLabels
+      ? `W${Math.min(5, Math.floor((new Date(p.date).getDate() - 1) / 7) + 1)}`
+      : new Date(p.date).toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+        }),
   }));
   return (
-    <div className="h-40 w-full">
+    <div className="h-44 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}>
+        <ComposedChart
+          data={chartData}
+          margin={{ top: 10, right: 8, left: -22, bottom: 0 }}
+        >
+          <defs>
+            <linearGradient id="moodFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.28} />
+              <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.06} />
+            </linearGradient>
+          </defs>
           <YAxis
             domain={[0, 10]}
-            tick={{ fill: '#6B7280', fontSize: 10 }}
+            tick={{ fill: '#6B7280', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
             width={28}
           />
           <XAxis
             dataKey="date"
-            tick={{ fill: '#6B7280', fontSize: 10 }}
+            tick={{ fill: '#6B7280', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
             interval="preserveStartEnd"
@@ -73,15 +91,21 @@ export function MoodChart({ data }: { data: MoodPoint[] }) {
             }}
             labelStyle={{ color: '#9CA3AF' }}
           />
+          <Area
+            type="monotone"
+            dataKey="mood"
+            stroke="none"
+            fill="url(#moodFill)"
+          />
           <Line
             type="monotone"
             dataKey="mood"
             stroke="#8B5CF6"
-            strokeWidth={2.5}
+            strokeWidth={3}
             dot={{ r: 3, fill: '#8B5CF6', strokeWidth: 0 }}
-            activeDot={{ r: 5 }}
+            activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
           />
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );

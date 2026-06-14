@@ -30,6 +30,18 @@ const processResultSchema = z.object({
   reflectiveQuestion: z.string().default(''),
   isConcern: z.coerce.boolean().default(false),
   aiAnalysis: z.string().default(''),
+  feeling: z.string().default(''),
+  ideas: z.array(z.string()).default([]),
+  pattern: z
+    .object({
+      name: z.string(),
+      whatIsIt: z.string().default(''),
+      evidence: z.array(z.string()).default([]),
+      advice: z.string().default(''),
+      needsAttention: z.coerce.boolean().default(false),
+    })
+    .nullable()
+    .default(null),
   tasks: z
     .array(
       z.object({
@@ -51,6 +63,20 @@ const processResponseSchema = {
     reflectiveQuestion: { type: SchemaType.STRING },
     isConcern: { type: SchemaType.BOOLEAN },
     aiAnalysis: { type: SchemaType.STRING },
+    feeling: { type: SchemaType.STRING },
+    ideas: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+    pattern: {
+      type: SchemaType.OBJECT,
+      nullable: true,
+      properties: {
+        name: { type: SchemaType.STRING },
+        whatIsIt: { type: SchemaType.STRING },
+        evidence: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+        advice: { type: SchemaType.STRING },
+        needsAttention: { type: SchemaType.BOOLEAN },
+      },
+      required: ['name', 'whatIsIt', 'evidence', 'advice', 'needsAttention'],
+    },
     tasks: {
       type: SchemaType.ARRAY,
       items: {
@@ -72,6 +98,8 @@ const processResponseSchema = {
     'reflectiveQuestion',
     'isConcern',
     'aiAnalysis',
+    'feeling',
+    'ideas',
     'tasks',
   ],
 } as const;

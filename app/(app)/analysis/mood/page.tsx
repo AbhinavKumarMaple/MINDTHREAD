@@ -2,39 +2,46 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { TrendingUp, TrendingDown, Minus, Star, ArrowDownRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  ArrowLeft,
+  ArrowUp,
+  ArrowDown,
+  Minus,
+  CalendarDays,
+  AlertTriangle,
+  TrendingUp,
+} from 'lucide-react';
 import { Screen } from '@/components/layout/Screen';
-import { ScreenHeader } from '@/components/layout/ScreenHeader';
-import { Card, SectionLabel } from '@/components/ui/Card';
 import { MoodChart } from '@/components/analysis/charts';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { LoadingState, EmptyState } from '@/components/ui/states';
 import { useAnalytics } from '@/lib/query/hooks';
-import { formatDayLabel } from '@/lib/utils';
+import { moodAccent } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 import type { MoodPoint } from '@/lib/types';
 
 type Range = 'week' | 'month' | 'year';
 const WINDOW: Record<Range, number> = { week: 7, month: 31, year: 365 };
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-interface Insight {
+interface InsightChip {
   label: string;
-  icon: typeof TrendingUp;
-  className: string;
+  icon: typeof ArrowUp;
+  color: string;
 }
 
-function computeInsights(points: MoodPoint[]): Insight[] {
+function computeChips(points: MoodPoint[]): InsightChip[] {
   if (points.length < 2) return [];
-  const out: Insight[] = [];
+  const out: InsightChip[] = [];
   const half = Math.floor(points.length / 2);
   const avg = (arr: MoodPoint[]) =>
     arr.reduce((a, p) => a + p.moodScore, 0) / Math.max(1, arr.length);
   const diff = avg(points.slice(half)) - avg(points.slice(0, half));
   if (diff > 0.3)
-    out.push({ label: 'Improving', icon: TrendingUp, className: 'text-success' });
+    out.push({ label: 'Improving', icon: ArrowUp, color: '#34D399' });
   else if (diff < -0.3)
-    out.push({ label: 'Declining', icon: TrendingDown, className: 'text-danger' });
-  else out.push({ label: 'Steady', icon: Minus, className: 'text-ink-secondary' });
+    out.push({ label: 'Declining', icon: ArrowDown, color: '#EF4444' });
+  else out.push({ label: 'Steady', icon: Minus, color: '#9CA3AF' });
 
   const byDay = new Map<number, number[]>();
   for (const p of points) {
@@ -54,20 +61,21 @@ function computeInsights(points: MoodPoint[]): Insight[] {
   if (bestDay >= 0)
     out.push({
       label: `Best: ${WEEKDAYS[bestDay]}s`,
-      icon: Star,
-      className: 'text-ai',
+      icon: CalendarDays,
+      color: '#A78BFA',
     });
 
   const low = points.reduce((m, p) => (p.moodScore < m.moodScore ? p : m));
   out.push({
-    label: `Low: ${new Date(low.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`,
-    icon: ArrowDownRight,
-    className: 'text-primary-soft',
+    label: `Dip: W${Math.min(5, Math.floor((new Date(low.date).getDate() - 1) / 7) + 1)}`,
+    icon: AlertTriangle,
+    color: '#F59E0B',
   });
   return out;
 }
 
 export default function MoodTrendPage() {
+  const router = useRouter();
   const { data, isLoading } = useAnalytics();
   const [range, setRange] = useState<Range>('month');
   const all = useMemo(() => data?.summary.moodTrend ?? [], [data]);
@@ -84,11 +92,47 @@ export default function MoodTrendPage() {
           (points.reduce((a, p) => a + p.moodScore, 0) / points.length) * 10,
         ) / 10
       : null;
-  const insights = useMemo(() => computeInsights(points), [points]);
+  const chips = useMemo(() => computeChips(points), [points]);
 
   return (
-    <Screen header={<ScreenHeader title="Mood Trend" />}>
-      <div className="space-y-5 px-5 pb-10">
+    <Screen
+      header={
+        <>
+          <div className="flex items-center px-5 pb-6 pt-2">
+            <button
+              onClick={() => router.back()}
+              aria-label="Back"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-high text-ink-primary"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h1 className="flex-1 pr-12 text-center font-display text-[24px] font-bold text-ink-primary">
+              Mood Trend
+            </h1>
+          </div>
+          <div className="flex border-b border-line/60">
+            {(['week', 'month', 'year'] as Range[]).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                className={cn(
+                  'relative flex-1 pb-3.5 text-center text-[18px] capitalize transition',
+                  range === r
+                    ? 'font-semibold text-ink-primary'
+                    : 'text-ink-muted',
+                )}
+              >
+                {r}
+                {range === r && (
+                  <span className="absolute inset-x-8 bottom-0 h-[3px] rounded-full bg-white" />
+                )}
+              </button>
+            ))}
+          </div>
+        </>
+      }
+    >
+      <div className="px-5 pb-10 pt-5">
         {isLoading ? (
           <LoadingState />
         ) : all.length === 0 ? (
@@ -99,73 +143,78 @@ export default function MoodTrendPage() {
           />
         ) : (
           <>
-            <SegmentedControl<Range>
-              value={range}
-              onChange={setRange}
-              options={[
-                { value: 'week', label: 'Week' },
-                { value: 'month', label: 'Month' },
-                { value: 'year', label: 'Year' },
-              ]}
-            />
-
-            <Card>
+            <div className="rounded-3xl border border-line bg-surface p-5">
               <div className="mb-2 flex items-center justify-between">
-                <SectionLabel className="mb-0">
-                  {range === 'week' ? '7-day' : range === 'month' ? '30-day' : 'Yearly'}{' '}
-                  overview
-                </SectionLabel>
-                <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary-soft">
-                  avg {avg ?? '—'} / 10
-                </span>
+                <p className="font-display text-[20px] font-bold text-ink-primary">
+                  {range === 'week'
+                    ? '7-Day Overview'
+                    : range === 'month'
+                      ? '30-Day Overview'
+                      : 'Yearly Overview'}
+                </p>
+                <p className="text-[16px] text-ink-muted">
+                  Avg {avg ?? '—'} / 10
+                </p>
               </div>
               {points.length === 0 ? (
                 <p className="py-8 text-center text-sm text-ink-muted">
                   No entries in this range.
                 </p>
               ) : (
-                <MoodChart data={points} />
+                <MoodChart data={points} weekLabels={range !== 'week'} />
               )}
-            </Card>
+              {chips.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2.5">
+                  {chips.map((c) => (
+                    <span
+                      key={c.label}
+                      className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[14px] font-medium"
+                      style={{ borderColor: c.color, color: c.color }}
+                    >
+                      <c.icon className="h-4 w-4" />
+                      {c.label}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {insights.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {insights.map((ins) => (
-                  <span
-                    key={ins.label}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-surface-high px-3 py-1.5 text-[13px] font-medium"
-                  >
-                    <ins.icon className={`h-3.5 w-3.5 ${ins.className}`} />
-                    <span className="text-ink-secondary">{ins.label}</span>
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <div>
-              <SectionLabel>Entries</SectionLabel>
-              <div className="space-y-2.5">
-                {recent.map((p) => (
+            <p className="mb-3 mt-7 text-[12px] font-bold uppercase tracking-[0.2em] text-ink-secondary">
+              Entries this {range}
+            </p>
+            <div className="space-y-3.5">
+              {recent.map((p) => {
+                const color = moodAccent(p.moodScore);
+                return (
                   <Link
                     key={p.entryId}
                     href={`/entry/${p.entryId}`}
-                    className="flex items-center justify-between rounded-2xl border border-line bg-surface p-3.5"
+                    className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-line bg-surface p-4 pl-6"
                   >
+                    <span
+                      className="absolute inset-y-0 left-0 w-[3px]"
+                      style={{ backgroundColor: color }}
+                    />
                     <div className="min-w-0">
-                      <p className="truncate text-[15px] text-ink-primary">
+                      <p className="truncate text-[18px] font-medium text-ink-primary">
                         {p.title ?? 'Untitled'}
                       </p>
-                      <p className="text-xs text-ink-muted">
-                        {formatDayLabel(p.date)}
+                      <p className="mt-0.5 text-[14px] text-ink-muted">
+                        {new Date(p.date).toLocaleDateString(undefined, {
+                          month: 'long',
+                          day: 'numeric',
+                        })}
                       </p>
                     </div>
-                    <span className="ml-3 shrink-0 font-display text-lg font-bold text-primary-soft">
-                      {p.moodScore}
-                      <span className="text-sm text-ink-muted">/10</span>
+                    <span
+                      className="ml-3 shrink-0 rounded-lg px-2.5 py-1 text-[15px] font-bold"
+                      style={{ backgroundColor: `${color}26`, color }}
+                    >
+                      {p.moodScore}/10
                     </span>
                   </Link>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </>
         )}

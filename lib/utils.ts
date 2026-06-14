@@ -38,22 +38,25 @@ export function formatDateLong(iso: string): string {
   });
 }
 
+// Day group header, matching the design: "Thursday · June 5"
 export function formatDayLabel(iso: string): string {
   const d = new Date(iso);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  const sameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-  if (sameDay(d, today)) return 'Today';
-  if (sameDay(d, yesterday)) return 'Yesterday';
-  return d.toLocaleDateString(undefined, {
-    weekday: 'long',
-    month: 'short',
+  const weekday = d.toLocaleDateString(undefined, { weekday: 'long' });
+  const monthDay = d.toLocaleDateString(undefined, {
+    month: 'long',
     day: 'numeric',
   });
+  return `${weekday} · ${monthDay}`;
+}
+
+// Card meta date, matching the design: "June 5 · 11:42 PM"
+export function formatMetaDate(iso: string): string {
+  const d = new Date(iso);
+  const monthDay = d.toLocaleDateString(undefined, {
+    month: 'long',
+    day: 'numeric',
+  });
+  return `${monthDay} · ${formatTime(iso)}`;
 }
 
 export function dayKey(iso: string): string {
@@ -64,6 +67,15 @@ export function dayKey(iso: string): string {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+// A task's effective date: its due date when set, otherwise when it was created.
+// Used for date grouping/filtering so moving a due date moves the task's bucket.
+export function taskDate(t: {
+  dueDate: string | null;
+  createdAt: string;
+}): string {
+  return t.dueDate ?? t.createdAt;
 }
 
 // Group items by their day, preserving order (newest first if input is sorted desc).
